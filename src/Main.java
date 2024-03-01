@@ -53,13 +53,6 @@ class MapManager {
         return map.getMario();
     }
 
-    public void fire(GameEngine engine) {
-        Fireball fireball = getMario().fire();
-        if (fireball != null) {
-            map.addFireball(fireball);
-            engine.playFireball();
-        }
-    }
 
     public boolean isGameOver() {
         return getMario().getRemainingLives() == 0 || map.isTimeOver();
@@ -246,30 +239,10 @@ class MapManager {
 
 
     private void checkFireballContact() {
-        ArrayList<Fireball> fireballs = map.getFireballs();
         ArrayList<Enemy> enemies = map.getEnemies();
         ArrayList<Brick> bricks = map.getAllBricks();
         ArrayList<GameObject> toBeRemoved = new ArrayList<>();
 
-        for(Fireball fireball : fireballs){
-            Rectangle fireballBounds = fireball.getBounds();
-
-            for(Enemy enemy : enemies){
-                Rectangle enemyBounds = enemy.getBounds();
-                if (fireballBounds.intersects(enemyBounds)) {
-                    acquirePoints(100);
-                    toBeRemoved.add(enemy);
-                    toBeRemoved.add(fireball);
-                }
-            }
-
-            for(Brick brick : bricks){
-                Rectangle brickBounds = brick.getBounds();
-                if (fireballBounds.intersects(brickBounds)) {
-                    toBeRemoved.add(fireball);
-                }
-            }
-        }
 
         removeObjects(toBeRemoved);
     }
@@ -277,15 +250,6 @@ class MapManager {
     private void removeObjects(ArrayList<GameObject> list){
         if(list == null)
             return;
-
-        for(GameObject object : list){
-            if(object instanceof Fireball){
-                map.removeFireball((Fireball)object);
-            }
-            else if(object instanceof Enemy){
-                map.removeEnemy((Enemy)object);
-            }
-        }
     }
 
     public void addRevealedBrick(OrdinaryBrick ordinaryBrick) {
@@ -501,7 +465,6 @@ class MapManager {
             } else if (input == ButtonAction.ACTION_COMPLETED) {
                 mario.setVelX(0);
             } else if (input == ButtonAction.FIRE) {
-                mapManager.fire(this);
             } else if (input == ButtonAction.PAUSE_RESUME) {
                 pauseGame();
             }
@@ -865,11 +828,6 @@ class MapCreator {
                     ((Goomba)enemy).setRightImage(goombaRight);
                     createdMap.addEnemy(enemy);
                 }
-                else if (currentPixel == koopa) {
-                    Enemy enemy = new KoopaTroopa(xLocation, yLocation, this.koopaLeft);
-                    ((KoopaTroopa)enemy).setRightImage(koopaRight);
-                    createdMap.addEnemy(enemy);
-                }
                 else if (currentPixel == mario) {
                     Mario marioObject = new Mario(xLocation, yLocation);
                     createdMap.setMario(marioObject);
@@ -1112,41 +1070,6 @@ class MapCreator {
         this.rightImage = rightImage;
     }
 }
-  class KoopaTroopa extends Enemy{
-
-    private BufferedImage rightImage;
-
-      KoopaTroopa(double x, double y, BufferedImage style) {
-        super(x, y, style);
-        setVelX(3);
-    }
-
-    @Override
-      void draw(Graphics g){
-        if(getVelX() > 0){
-            g.drawImage(rightImage, (int)getX(), (int)getY(), null);
-        }
-        else
-            super.draw(g);
-    }
-
-      void setRightImage(BufferedImage rightImage) {
-        this.rightImage = rightImage;
-    }
-}
-  class Fireball extends GameObject {
-
-      Fireball(double x, double y, BufferedImage style, boolean toRight) {
-        super(x, y, style);
-        setDimension(24, 24);
-        setFalling(false);
-        setJumping(false);
-        setVelX(10);
-
-        if(!toRight)
-            setVelX(-5);
-    }
-}
 
   class Mario extends GameObject{
 
@@ -1217,10 +1140,6 @@ class MapCreator {
             setDimension(48, 48);
             return false;
         }
-    }
-
-      Fireball fire(){
-        return marioForm.fire(toRight, getX(), getY());
     }
 
       void acquireCoin() {
@@ -1320,13 +1239,6 @@ class MapCreator {
         Animation newAnimation = new Animation(leftFrames, rightFrames);
 
         return new MarioForm(newAnimation, false, false);
-    }
-
-      Fireball fire(boolean toRight, double x, double y) {
-        if(isFire){
-            return new Fireball(x, y + 48, fireballStyle, toRight);
-        }
-        return null;
     }
 
       boolean isSuper() {
@@ -2000,7 +1912,6 @@ class Map1 {
     private ArrayList<Enemy> enemies = new ArrayList<>();
     private ArrayList<Brick> groundBricks = new ArrayList<>();
     private ArrayList<Brick> revealedBricks = new ArrayList<>();
-    private ArrayList<Fireball> fireballs = new ArrayList<>();
     private EndFlag endPoint;
     private BufferedImage backgroundImage;
     private double bottomBorder = 720 - 96;
@@ -2023,10 +1934,6 @@ class Map1 {
 
     public ArrayList<Enemy> getEnemies() {
         return enemies;
-    }
-
-    public ArrayList<Fireball> getFireballs() {
-        return fireballs;
     }
 
 
@@ -2055,17 +1962,9 @@ class Map1 {
         drawBackground(g2);
         drawBricks(g2);
         drawEnemies(g2);
-        drawFireballs(g2);
         drawMario(g2);
         endPoint.draw(g2);
     }
-
-    private void drawFireballs(Graphics2D g2) {
-        for(Fireball fireball : fireballs){
-            fireball.draw(g2);
-        }
-    }
-
 
     private void drawBackground(Graphics2D g2){
         g2.drawImage(backgroundImage, 0, 0, null);
@@ -2099,10 +1998,6 @@ class Map1 {
             enemy.updateLocation();
         }
 
-        for (Fireball fireball: fireballs) {
-            fireball.updateLocation();
-        }
-
         for(Iterator<Brick> brickIterator = revealedBricks.iterator(); brickIterator.hasNext();){
             OrdinaryBrick brick = (OrdinaryBrick)brickIterator.next();
             brick.animate();
@@ -2120,9 +2015,6 @@ class Map1 {
     }
 
 
-    public void addFireball(Fireball fireball) {
-        fireballs.add(fireball);
-    }
 
     public void setEndPoint(EndFlag endPoint) {
         this.endPoint = endPoint;
@@ -2134,10 +2026,6 @@ class Map1 {
 
     public void addRevealedBrick(OrdinaryBrick ordinaryBrick) {
         revealedBricks.add(ordinaryBrick);
-    }
-
-    public void removeFireball(Fireball object) {
-        fireballs.remove(object);
     }
 
     public void removeEnemy(Enemy object) {
