@@ -1112,6 +1112,8 @@ class MapCreator {
         if(!isJumping() && !isFalling()){
             setJumping(true);
             setVelY(10);
+            setVelY(-2);
+            setVelY(10);
             engine.playJump();
         }
     }
